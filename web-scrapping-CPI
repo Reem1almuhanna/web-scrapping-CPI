@@ -1,0 +1,117 @@
+# Importing Libraries
+from bs4 import BeautifulSoup as soup  # HTML data structure
+from urllib.request import urlopen as uReq  # Web client
+import pandas as pd
+import numpy as np
+import csv
+
+# URl to web scrap from.
+# in this example we web scrap graphics cards from Newegg.com
+page_url = "https://shop.tamimimarkets.com/hot-deals"
+
+# opens the connection and downloads html page from url
+uClient = uReq(page_url)
+
+# parses html into a soup data structure to traverse html
+page_soup = soup(uClient.read(), "html.parser")
+uClient.close()
+
+#grabs all containers
+containers = page_soup.findAll("div", {"class": "Product__StyledInfo-sc-13egllk-5 dkVPFu"})
+print(len(containers))
+
+print(soup.prettify(containers[0]))
+container=containers[0]
+#grabs the products name
+product_name = container.findAll("div", {"class": "Product__StyledTitle-sc-13egllk-4 jTNBdt"})
+print(product_name[0].text)
+
+#grabs old and new price
+price = container.findAll("div", {"class": "Product__PriceAndSaveButton-sc-13egllk-7 hOYguo"})
+print(price[0].text)
+
+#grabs new price only
+new_price = container.findAll("span", {"class": "Text-sc-1bsd7ul-0 bWrtIK"})
+print(new_price[0].text)
+
+#grabs old price only
+old_price = container.findAll("span", {"class": "Text-sc-1bsd7ul-0 Product__StyledText-sc-13egllk-9 bXJAZp"})
+print(old_price[0].text)
+
+# opens file, and writes headers
+df= pd.DataFrame(records, columns=['name' , 'newprice' , 'oldprice'])
+with open('mycsv.csv' , 'w', newline='') as f:
+    fieldnames=['name','newprice','oldprice']
+    thewriter= csv.DictWriter(f,fieldnames=fieldnames)
+    thewriter.writeheader()
+    
+    records =[]
+# loops over each product and grabs attributes about each product
+for container in containers:
+    product_name_container = container.findAll("div", {"class": "Product__StyledTitle-sc-13egllk-4 jTNBdt"})
+    name = product_name_container[0].text
+    new_price_container = container.findAll("span", {"class": "Text-sc-1bsd7ul-0 bWrtIK"})
+    newprice = new_price_container[0].text.strip()
+    old_price_container = container.findAll("span", {"class": "Text-sc-1bsd7ul-0 Product__StyledText-sc-13egllk-9 bXJAZp"})
+    oldprice = old_price_container[0].text.strip()
+    df['newprice'] = df['newprice'].str.replace('SAR', ' ') 
+    df['newprice'] = df['newprice'].str.replace('SAR', ' ') 
+    records.append((name,newprice,oldprice))
+    
+    # prints the dataset to console 
+    print("name: " , name)
+    print("newprice: " , newprice)
+    print("oldprice: " , oldprice)
+    
+    #see the data 
+    df.head()
+    
+    df.tail()
+    
+    #export the data to CSV file
+    df.to_csv('products1.csv', index=False , encoding='utf-8')
+    
+    #import the data as CSV file
+df=pd.read_csv('products.csv', encoding='utf-8')
+
+#remove SAR to conver it to float
+df['newprice'] = df['newprice'].apply(str).str.replace('SAR', ' ')
+df['oldprice'] = df['oldprice'].apply(str).str.replace('SAR', ' ')
+print(newprice)
+print(oldprice)
+
+#conver it to float
+df['newprice'] = df['newprice'].astype(float)
+df['oldprice'] = df['oldprice'].astype(float)
+
+#find sum of new price and old price 
+df.aggregate(['sum', 'min'])
+
+
+totn=df['newprice'].sum()
+toto=df['oldprice'].sum()
+print(totn)
+print(toto)
+
+#find Consumer Price Index 
+print(((totn/toto)*100)-100)
+
+#see the difference between new and old price 
+
+import matplotlib.pyplot as plt
+import pandas as pd
+
+# gca stands for 'get current axis'
+ax = plt.gca()
+plt.title('Diffecence between old price ')
+df.plot(kind='line',y='newprice',ax=ax)
+df.plot(kind='line',y='oldprice', color='green', ax=ax)
+
+plt.show()
+
+
+
+
+so , Now we can say it has decreased at a rate 26.567
+
+--Thank you--
